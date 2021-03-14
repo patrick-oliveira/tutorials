@@ -7,7 +7,8 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torchvision import transforms, utils, datasets, models
 
-device = 'cpu'
+ngpu = 1
+device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
 
 def train_autoencoder(model, dataloaders, dataset_size, criterion, optimizer, scheduler = None, num_epochs = 10, view = True):
     print("{:7}  {:10}  {:6}\n".format("Epoch", "Stage", "Loss"))
@@ -28,6 +29,7 @@ def train_autoencoder(model, dataloaders, dataset_size, criterion, optimizer, sc
                 if view:
                     inputs = inputs.reshape(inputs.shape[0], 1, -1)
                 inputs = inputs.to(device)
+#                 print(inputs.shape)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
