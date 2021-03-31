@@ -7,7 +7,8 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torchvision import transforms, utils, datasets, models
 
-device = 'cpu'
+ngpu = 1
+device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
 
 def train_autoencoder(model, dataloaders, dataset_size, criterion, optimizer, scheduler = None, num_epochs = 10, view = True):
     print("{:7}  {:10}  {:6}\n".format("Epoch", "Stage", "Loss"))
@@ -28,9 +29,20 @@ def train_autoencoder(model, dataloaders, dataset_size, criterion, optimizer, sc
                 if view:
                     inputs = inputs.reshape(inputs.shape[0], 1, -1)
                 inputs = inputs.to(device)
+#                 print(inputs.shape)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
+                    
+                    
+                    
+                    loss = criterion(outputs, inputs)
+                    if len(loss) > 1:
+                        reconstruction = loss[1]
+                        loss = loss[0]
+                        cumulative_loss += reconstruction.item()*inputs.size(0)
+                    else:
+                        cumulative_loss += loss.item()*inputs.size(0)
                     
                     penalty_loss = None
                     try:
@@ -38,14 +50,13 @@ def train_autoencoder(model, dataloaders, dataset_size, criterion, optimizer, sc
                     except:
                         pass
                     
-                    loss = criterion(outputs, inputs)
                     if penalty_loss != None:
                         loss += penalty_loss
                         
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
-                cumulative_loss += loss.item()*inputs.size(0)
+                
                 del(inputs); del(_)
                 
             if phase == 'train' and scheduler != None:
