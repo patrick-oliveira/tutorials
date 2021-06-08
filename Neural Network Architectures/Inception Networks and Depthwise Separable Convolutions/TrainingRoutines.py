@@ -1,6 +1,9 @@
 import sys
 import time
 import logging
+import copy 
+
+import numpy as np
 
 def log_training(log_path: str, log_name: str = 'default_log'):
     logging.basicConfig(stream = sys.stdout, 
@@ -21,7 +24,7 @@ def log_training(log_path: str, log_name: str = 'default_log'):
             logger.removeHandler(handler)
             
 class Trainer:
-    def __init__(self, problem_type: str = None,
+    def __init__(self, problem_type: str,
                        training_routine,
                        validation_routine,
                        path: str = None,
@@ -60,7 +63,7 @@ class Trainer:
             num_epochs (int): Número de épocas
         '''
         
-        with log_training(path, log_name) as logger:
+        with log_training(self.path, self.log_name) as logger:
             model, training_info = self.training_function(model, dataloaders, criterion, optimizer, scheduler, num_epochs, logger, self.training_routine, self.validation_routine)
        
         return model, training_info
@@ -138,7 +141,8 @@ def train_classification(model, dataloaders, criterion, optimizer, scheduler = N
         training_log = "{:7}  {:10}  {:<6.2f}  {:<8.2f}".format("{}/{}".format(epoch + 1, num_epochs), "Training", training_loss, training_accuracy)
         validation_log = "{:7}  {:10}  {:<6.2f}  {:<8.2f}".format(" ", "Validation", validation_loss, validation_accuracy)
         logger.info(training_log); logger.info(validation_log)
-            
+
+    time_elapsed = time.time() - since
     conclusion_log = 'Training complete in {:.0f}m {:.0f}s \n \
                       Best Validation Accuracy: {:.2f} \n \
                       Best Validation Loss: {:.2f}'.format(time_elapsed // 60, time_elapsed % 60, training_info['Best Accuracy'], training_info['Best Loss'])
@@ -208,7 +212,8 @@ def train_regression(model, dataloaders, criterion, optimizer, scheduler = None,
         training_log = "{:7}  {:10}  {:<6.2f}".format("{}/{}".format(epoch + 1, num_epochs), "Training", training_loss)
         validation_log = "{:7}  {:10}  {:<6.2f}".format(" ", "Validation", validation_loss)
         logger.info(training_log); logger.info(validation_log)
-            
+    
+    time_elapsed = time.time() - since
     conclusion_log = 'Training complete in {:.0f}m {:.0f}s \n \
                       Best Validation Loss: {:.2f}'.format(time_elapsed // 60, time_elapsed % 60, training_info['Best Accuracy'], training_info['Best Loss'])
     logger.info(conclusion_log)

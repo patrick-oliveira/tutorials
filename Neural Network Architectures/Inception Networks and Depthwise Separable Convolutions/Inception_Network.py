@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 
+ngpu = 1
+device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
+
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride = 1, padding = 0):
         super(ConvBlock, self).__init__()
@@ -66,7 +69,7 @@ class InceptionModule(nn.Module):
 
 class Inception(nn.Module):
     def __init__(self, num_classes = 10):
-        super(GoogLeNet, self).__init__()
+        super(Inception, self).__init__()
         self.conv1 = ConvBlock(3, 64, kernel_size=7, stride=2, padding=3)
         self.pool1 = nn.MaxPool2d(3, stride=2, padding=0, ceil_mode=True)
         self.conv2 = ConvBlock(64, 64, kernel_size=1, stride=1, padding=0)
@@ -183,7 +186,7 @@ def googlenet_training_routine(model, inputs, labels, criterion, optimizer, sche
         loss2 = criterion(aux1, labels)
         loss3 = criterion(aux2, labels)
         loss  = loss1 + 0.3 * loss2 + 0.3 * loss3 
-        cumulative_loss += loss.data.item() * inputs.size(0)
+        cumulative_loss = loss.data.item() * inputs.size(0)
 
         # Backward pass.
         loss.backward()
